@@ -1,7 +1,7 @@
 # IPFN CLI commands in Go
 
 [![IPFN project](https://img.shields.io/badge/project-IPFN-blue.svg?style=flat-square)](http://github.com/ipfn)
-[![GoDoc](https://godoc.org/github.com/ipfn/ipfn/commands?status.svg)](https://godoc.org/github.com/ipfn/ipfn/commands)
+[![GoDoc](https://godoc.org/github.com/ipfn/go-ipfn-commands?status.svg)](https://godoc.org/github.com/ipfn/go-ipfn-commands)
 
 IPFN CLI commands for Go programming language.
 
