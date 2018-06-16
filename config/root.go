@@ -21,6 +21,6 @@ import (
 // RootCmd - Root config RootCmd.
 var RootCmd = &cobra.Command{
 	Use:         "config",
-	Short:       "Configuration commands",
+	Short:       "General configuration",
 	Annotations: map[string]string{"category": "config"},
 }

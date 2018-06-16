@@ -30,26 +30,33 @@ import (
 )
 
 var (
+	bechAddr      bool
 	btcAddr       bool
 	printKey      bool
-	forcePath     bool
+	hashPath      bool
 	customSeedPwd bool
 	keyAddrID     string
 )
 
 func init() {
 	RootCmd.AddCommand(DeriveCmd)
-	DeriveCmd.PersistentFlags().BoolVarP(&forcePath, "force", "f", false, "Force derivation path")
-	DeriveCmd.PersistentFlags().BoolVarP(&customSeedPwd, "custom", "u", false, "Use ustom seed derivation password")
+	DeriveCmd.PersistentFlags().BoolVarP(&hashPath, "mnemonic", "m", false, "Use mnemonic as path")
+	DeriveCmd.PersistentFlags().BoolVarP(&customSeedPwd, "custom", "u", false, "Use custom seed derivation password")
 	DeriveCmd.PersistentFlags().StringVarP(&keyAddrID, "addr", "a", "0x0", "Custom pkhash address network ID")
-	DeriveCmd.PersistentFlags().BoolVar(&btcAddr, "btc", false, "BTC address format")
+	DeriveCmd.PersistentFlags().BoolVar(&bechAddr, "bech", false, "Bech address format")
+	DeriveCmd.PersistentFlags().BoolVarP(&btcAddr, "btc", "b", false, "BTC address format")
 	DeriveCmd.PersistentFlags().BoolVarP(&printKey, "print-key", "p", false, "Prints private and public key")
 }
 
 // DeriveCmd - Key derive command.
 var DeriveCmd = &cobra.Command{
-	Use:         "derive [seed] [path]",
-	Short:       "Derives key from seed",
+	Use:   "derive [seed] [path]",
+	Short: "Derives key from seed",
+	Long: `Derives key from seed and path.
+Path is defined as: m / purpose' / coin_type' / account' / change / address_index
+
+Mnemonic can be used for path by using --force or -f flag.`,
+	Example:     "  $ ipfn derive example m/44'/138'/0'/0/0",
 	Annotations: map[string]string{"category": "key"},
 	Args: func(cmd *cobra.Command, args []string) error {
 		if len(args) < 1 {
@@ -76,7 +83,7 @@ func HandleDeriveCmd(cmd *cobra.Command, args []string) (err error) {
 }
 
 func printAccount(acc *keywallet.ExtendedKey) (err error) {
-	pubkey, err := acc.ECPubKey()
+	pub, err := acc.ECPubKey()
 	if err != nil {
 		return
 	}
@@ -85,16 +92,22 @@ func printAccount(acc *keywallet.ExtendedKey) (err error) {
 		return
 	}
 	var addr interface{}
-	if id != 0 || btcAddr {
-		addr, err = pkhash.PKHash(pubkey, id)
+	if bechAddr {
+		addr, err = pkhash.Base32PKHashString(pub, id)
+		if err != nil {
+			return
+		}
+	} else if id != 0 || btcAddr {
+		addr, err = acc.PKHash(id)
 		if err != nil {
 			return
 		}
 	} else {
-		addr, err = pkhash.Base32PKHashString(pubkey, id)
+		ethaddr, err := acc.Address()
 		if err != nil {
-			return
+			return err
 		}
+		addr = ethaddr.String()
 	}
 	if printKey {
 		neuter, _ := acc.Neuter()
@@ -102,6 +115,11 @@ func printAccount(acc *keywallet.ExtendedKey) (err error) {
 		logger.Printf("Private key: %s", acc)
 	}
 	logger.Printf("Address: %s", addr)
+	c, err := pkhash.PubkeyToCid(pub)
+	if err != nil {
+		return
+	}
+	logger.Printf("IPFN address: /ipfn/%s", c)
 	return
 }
 

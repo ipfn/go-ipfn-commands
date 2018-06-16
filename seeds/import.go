@@ -23,8 +23,7 @@ import (
 
 	bip39 "github.com/ipfn/go-bip39"
 	cmdutil "github.com/ipfn/go-ipfn-cmd-util"
-
-	"github.com/crackcomm/viperkeys"
+	viperkeys "github.com/ipfn/go-viper-keystore"
 )
 
 func init() {
@@ -40,7 +39,7 @@ var ImportCmd = &cobra.Command{
 		if len(args) == 0 {
 			return errors.New("name argument is required")
 		}
-		has, err := viperkeys.Default.Has(args[0])
+		has, err := viperkeys.Has(args[0])
 		if err != nil {
 			return fmt.Errorf("failed to read keystore: %v", err)
 		}
@@ -61,15 +60,15 @@ func HandleImportCmd(cmd *cobra.Command, args []string) (err error) {
 	}
 	// Ask for *unique* name
 	name := args[0]
-	has, err := viperkeys.Default.Has(name)
+	has, err := viperkeys.Has(name)
 	if err != nil {
 		return fmt.Errorf("failed to read keystore: %v", err)
 	}
 	if has || name == "" {
 		name = cmdutil.PromptConfirmed("seed name", func(name string) bool {
-			has, _ := viperkeys.Default.Has(name)
+			has, _ := viperkeys.Has(name)
 			return !has
 		})
 	}
-	return viperkeys.Default.CreateKey(name, mnemonic, password)
+	return viperkeys.CreateKey(name, mnemonic, password)
 }

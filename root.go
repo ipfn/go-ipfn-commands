@@ -41,8 +41,10 @@ var cfgFile string
 
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
-	Use:   "go-ipfn commands",
-	Short: "https://github.com/ipfn/go-ipfn-commands",
+	Use:   "ipfn commands",
+	Short: `IPFN – Interplanetary Functions
+
+https://github.com/ipfn/go-ipfn`,
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.

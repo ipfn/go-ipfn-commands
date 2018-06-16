@@ -24,48 +24,47 @@ import (
 	cmdutil "github.com/ipfn/go-ipfn-cmd-util"
 	"github.com/ipfn/go-ipfn-cmd-util/logger"
 	crypto "github.com/ipfn/go-ipfn-crypto"
-
-	"github.com/crackcomm/viperkeys"
+	viperkeys "github.com/ipfn/go-viper-keystore"
 )
 
 var (
-	createName string
-	createSize int
+	newName string
+	newSize int
 )
 
 func init() {
-	RootCmd.AddCommand(CreateCmd)
-	CreateCmd.PersistentFlags().StringVarP(&createName, "name", "n", "", "Name of the seed")
-	CreateCmd.PersistentFlags().IntVarP(&createSize, "size", "s", 32, "Size of seed")
+	RootCmd.AddCommand(NewCmd)
+	NewCmd.PersistentFlags().StringVarP(&newName, "name", "n", "", "Name of the seed")
+	NewCmd.PersistentFlags().IntVarP(&newSize, "size", "s", 32, "Size of seed")
 }
 
-// CreateCmd - Seed create command.
-var CreateCmd = &cobra.Command{
-	Use:         "create [name]",
-	Short:       "Generates random seed",
+// NewCmd - Seed new command.
+var NewCmd = &cobra.Command{
+	Use:         "new [name]",
+	Short:       "Creates new seed",
 	Annotations: map[string]string{"category": "seed"},
 	Args: func(cmd *cobra.Command, args []string) error {
-		if createName == "" && len(args) == 1 {
-			createName = args[0]
+		if newName == "" && len(args) == 1 {
+			newName = args[0]
 		}
 		return nil
 	},
 	Run: cmdutil.WrapCommand(HandleCreateCmd),
 }
 
-// HandleCreateCmd - Handles seed create command.
+// HandleCreateCmd - Handles seed new command.
 func HandleCreateCmd(cmd *cobra.Command, args []string) (err error) {
 	// ask for password with confirmation
 	password := cmdutil.PromptPasswordRepeated("seed password")
 	// generate entropy
-	entropy, err := crypto.NewEntropy(createSize)
+	entropy, err := crypto.NewEntropy(newSize)
 	if err != nil {
 		return fmt.Errorf("failed to generate entropy: %v", err)
 	}
 	// convert entropy to mnemonic
 	mnemonic, err := bip39.NewMnemonic(entropy)
 	if err != nil {
-		return fmt.Errorf("failed to create mnemonic: %v", err)
+		return fmt.Errorf("failed to new mnemonic: %v", err)
 	}
 	// print mnemonic
 	logger.Printf("Mnemonic: %s", mnemonic)
@@ -75,17 +74,17 @@ func HandleCreateCmd(cmd *cobra.Command, args []string) (err error) {
 	}
 	// Ask for *unique* name
 	var has bool
-	if createName != "" {
-		has, err = viperkeys.Default.Has(createName)
+	if newName != "" {
+		has, err = viperkeys.Has(newName)
 		if err != nil {
 			return fmt.Errorf("failed to read keystore: %v", err)
 		}
 	}
-	if createName == "" || has {
-		createName = cmdutil.PromptConfirmed("seed name", func(name string) bool {
-			has, _ := viperkeys.Default.Has(name)
+	if newName == "" || has {
+		newName = cmdutil.PromptConfirmed("seed name", func(name string) bool {
+			has, _ := viperkeys.Has(name)
 			return !has
 		})
 	}
-	return viperkeys.Default.CreateKey(createName, mnemonic, password)
+	return viperkeys.CreateKey(newName, mnemonic, password)
 }

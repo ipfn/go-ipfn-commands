@@ -23,8 +23,7 @@ import (
 
 	cmdutil "github.com/ipfn/go-ipfn-cmd-util"
 	"github.com/ipfn/go-ipfn-cmd-util/logger"
-
-	"github.com/crackcomm/viperkeys"
+	viperkeys "github.com/ipfn/go-viper-keystore"
 )
 
 func init() {
@@ -40,7 +39,7 @@ var ExportCmd = &cobra.Command{
 		if len(args) < 1 {
 			return errors.New("name argument is required")
 		}
-		has, err := viperkeys.Default.Has(args[0])
+		has, err := viperkeys.Has(args[0])
 		if err != nil {
 			return fmt.Errorf("failed to read keystore: %v", err)
 		}
@@ -58,7 +57,7 @@ func HandleExportCmd(cmd *cobra.Command, args []string) (err error) {
 	if password == "" {
 		return errors.New("failed to get encryption password")
 	}
-	mnemonic, err := viperkeys.Default.Decrypt(args[0], []byte(password))
+	mnemonic, err := viperkeys.Decrypt(args[0], []byte(password))
 	if err != nil {
 		return
 	}

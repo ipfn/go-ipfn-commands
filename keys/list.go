@@ -15,33 +15,37 @@
 package keys
 
 import (
-	"errors"
+	"fmt"
 
-	prompt "github.com/segmentio/go-prompt"
 	"github.com/spf13/cobra"
 
-	"github.com/ipfn/go-ipfn-cmd-util/logger"
-	keywallet "github.com/ipfn/go-ipfn-keywallet"
+	cmdutil "github.com/ipfn/go-ipfn-cmd-util"
 	viperkeys "github.com/ipfn/go-viper-keystore"
 )
 
-// RootCmd - Root key RootCmd.
-var RootCmd = &cobra.Command{
-	Use:         "key",
-	Short:       "Cryptographic keys",
-	Annotations: map[string]string{"category": "key"},
+func init() {
+	RootCmd.AddCommand(ListCmd)
+	// ListCmd.PersistentFlags().BoolVarP(&printKey, "print-key", "p", false, "Prints public keys")
 }
 
-// uses global `hashPath` variable
-func deriveKey(name, path string) (_ *keywallet.ExtendedKey, err error) {
-	wallet := keywallet.New(viperkeys.Default)
-	password := prompt.PasswordMasked("Decryption password")
-	if password == "" {
-		return nil, errors.New("failed to get decryption password")
+// ListCmd - Key list command.
+var ListCmd = &cobra.Command{
+	Use:         "list",
+	Short:       "Lists available seeds",
+	Annotations: map[string]string{"category": "key"},
+	Run:         cmdutil.WrapCommand(HandleListCmd),
+}
+
+// HandleListCmd - Handles key list command.
+func HandleListCmd(cmd *cobra.Command, args []string) (err error) {
+	names, err := viperkeys.Names()
+	if err != nil {
+		return
 	}
-	if hashPath {
-		path = keywallet.HashPath(path)
-		logger.Printf("Derive path: %s", path)
+
+	for _, name := range names {
+		fmt.Println(name)
 	}
-	return wallet.Derive(name, path, []byte(password))
+
+	return
 }

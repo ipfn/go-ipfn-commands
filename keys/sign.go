@@ -28,6 +28,7 @@ import (
 
 	cmdutil "github.com/ipfn/go-ipfn-cmd-util"
 	"github.com/ipfn/go-ipfn-cmd-util/logger"
+	pkhash "github.com/ipfn/go-ipfn-pkhash"
 )
 
 var (
@@ -37,7 +38,7 @@ var (
 
 func init() {
 	RootCmd.AddCommand(SignCmd)
-	SignCmd.PersistentFlags().BoolVarP(&forcePath, "force", "f", false, "Force derivation path")
+	SignCmd.PersistentFlags().BoolVarP(&hashPath, "force", "f", false, "Force derivation path")
 	SignCmd.PersistentFlags().BoolVarP(&customSeedPwd, "custom", "u", false, "Custom seed password")
 	SignCmd.PersistentFlags().BoolVar(&btcAddr, "btc", false, "BTC address format")
 	SignCmd.PersistentFlags().IntVarP(&sigHashSize, "size", "s", 32, "Signature hash size")
@@ -73,6 +74,20 @@ func HandleSignCmd(cmd *cobra.Command, args []string) (err error) {
 	if err != nil {
 		return
 	}
+	ethaddr, err := acc.Address()
+	if err != nil {
+		return err
+	}
+	logger.Printf("Public key hash: %s", ethaddr.String())
+	pub, err := acc.ECPubKey()
+	if err != nil {
+		return
+	}
+	c, err := pkhash.PubkeyToCid(pub)
+	if err != nil {
+		return
+	}
+	logger.Printf("IPFN address: /ipfn/%s", c)
 	priv, err := acc.ECPrivKey()
 	if err != nil {
 		return
@@ -87,25 +102,16 @@ func HandleSignCmd(cmd *cobra.Command, args []string) (err error) {
 	if err != nil {
 		return
 	}
-	pub, err := acc.ECPubKey()
-	if err != nil {
-		return
-	}
 	if !signature.Verify(content, pub) {
 		return errors.New("Cannot verify signature")
 	}
-	if printKey {
-		if err := printAccount(acc); err != nil {
-			return err
-		}
-	}
 	sigBytes := signature.Serialize()
-	logger.Debugf("Hex encoded signature: %x", sigBytes)
+	logger.Printf("Signature hex: 0x%x", sigBytes)
 	sighash := sha3.Sum512(sigBytes)
 	if passwordAlphabet {
-		logger.Printf("Signature hash: %s", encodePass(sighash[:sigHashSize]))
+		logger.Printf("Signature encoded hash: %s", encodePass(sighash[:sigHashSize]))
 	} else {
-		logger.Printf("Signature hash: %x", sighash[:sigHashSize])
+		logger.Printf("Signature sha3-512: %x", sighash[:sigHashSize])
 	}
 	return
 }

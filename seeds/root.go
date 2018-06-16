@@ -21,6 +21,6 @@ import (
 // RootCmd - Root seed RootCmd.
 var RootCmd = &cobra.Command{
 	Use:         "seed",
-	Short:       "Seeds commands",
+	Short:       "Cryptographic seeds",
 	Annotations: map[string]string{"category": "seed"},
 }
