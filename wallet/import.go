@@ -12,63 +12,54 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package seeds
+package wallet
 
 import (
 	"errors"
-	"fmt"
 
 	prompt "github.com/segmentio/go-prompt"
 	"github.com/spf13/cobra"
 
 	bip39 "github.com/ipfn/go-bip39"
 	cmdutil "github.com/ipfn/go-ipfn-cmd-util"
-	viperkeys "github.com/ipfn/go-viper-keystore"
+	"github.com/ipfn/ipfn/go/keypair"
+	"github.com/ipfn/ipfn/go/wallet"
+)
+
+var (
+	importKey bool
 )
 
 func init() {
 	RootCmd.AddCommand(ImportCmd)
+	ImportCmd.PersistentFlags().BoolVarP(&importKey, "key", "k", true, "import key instead of seed")
 }
 
 // ImportCmd - Seed import command.
 var ImportCmd = &cobra.Command{
 	Use:         "import [name]",
-	Short:       "Imports existing seed",
-	Annotations: map[string]string{"category": "seed"},
-	Args: func(cmd *cobra.Command, args []string) error {
-		if len(args) == 0 {
-			return errors.New("name argument is required")
-		}
-		has, err := viperkeys.Has(args[0])
-		if err != nil {
-			return fmt.Errorf("failed to read keystore: %v", err)
-		}
-		if has {
-			return fmt.Errorf("seed %q already exists", args[0])
-		}
-		return nil
-	},
-	Run: cmdutil.WrapCommand(HandleImportCmd),
+	Short:       "Import master key",
+	Annotations: map[string]string{"category": "wallet"},
+	Args:        CheckCreateArgs,
+	Run:         cmdutil.WrapCommand(HandleImportCmd),
 }
 
 // HandleImportCmd - Handles seed import command.
 func HandleImportCmd(cmd *cobra.Command, args []string) (err error) {
-	mnemonic := cmdutil.PromptConfirmed("mnemonic seed", bip39.IsMnemonicValid)
+	name := cmdutil.ArgDefault(args, 0, "default")
+	seed := cmdutil.PromptConfirmed("seed", func(m string) (err error) {
+		if importKey {
+			_, err = keypair.NewKeyFromString(m)
+			return
+		}
+		if !bip39.IsMnemonicValid(m) {
+			return errors.New("mnemonic is invalid")
+		}
+		return
+	})
 	password := prompt.PasswordMasked("Seed password")
 	if password == "" {
 		return errors.New("failed to get password")
 	}
-	// Ask for *unique* name
-	name := args[0]
-	has, err := viperkeys.Has(name)
-	if err != nil {
-		return fmt.Errorf("failed to read keystore: %v", err)
-	}
-	if has || name == "" {
-		name = cmdutil.PromptConfirmed("seed name", func(name string) bool {
-			has, _ := viperkeys.Has(name)
-			return !has
-		})
-	}
-	return viperkeys.CreateKey(name, mnemonic, password)
+	return wallet.NewDefault().ImportKey(name, []byte(seed), []byte(password))
 }

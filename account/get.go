@@ -12,53 +12,32 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package config
+package account
 
 import (
-	"encoding/json"
-	"fmt"
-
+	"github.com/cespare/xxhash"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 
 	cmdutil "github.com/ipfn/go-ipfn-cmd-util"
 	"github.com/ipfn/go-ipfn-cmd-util/logger"
 )
 
 func init() {
-	RootCmd.AddCommand(GetCmd)
+	// RootCmd.AddCommand(GetCmd)
 }
 
-// GetCmd - Config get command.
+// GetCmd - Account get command.
 var GetCmd = &cobra.Command{
 	Use:         "get [key]",
-	Short:       "Gets config value",
-	Annotations: map[string]string{"category": "config"},
-	Args:        cobra.MinimumNArgs(1),
+	Short:       "Gets account value",
+	Annotations: map[string]string{"category": "account"},
 	Run:         cmdutil.WrapCommand(HandleGetCmd),
 }
 
-// HandleGetCmd - Handles config get command.
+// HandleGetCmd - Handles account get command.
 func HandleGetCmd(cmd *cobra.Command, args []string) (err error) {
-	key := args[0]
 
-	var value interface{}
-	value = viper.Get(key)
-	if value == nil {
-		return fmt.Errorf("config value under key %q was not found", key)
-	}
-
-	switch value.(type) {
-	case map[string]interface{}, []interface{}:
-		value, err = json.MarshalIndent(value, "", "  ")
-		if err != nil {
-			return
-		}
-	}
-
-	logger.Printf("Value under key %q:", key)
-	logger.Line()
-	logger.Printf("%s", value)
+	logger.Printf("0x%x", xxhash.Sum64([]byte(args[0])))
 
 	return
 }

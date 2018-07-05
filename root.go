@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package commands
+package cmd
 
 import (
 	"fmt"
@@ -25,15 +25,23 @@ import (
 
 	"github.com/ipfn/go-ipfn-cmd-util/logger"
 
-	"github.com/ipfn/go-ipfn-commands/config"
-	"github.com/ipfn/go-ipfn-commands/keys"
-	"github.com/ipfn/go-ipfn-commands/seeds"
+	"github.com/ipfn/ipfn/go/cmd/account"
+	"github.com/ipfn/ipfn/go/cmd/chain"
+	"github.com/ipfn/ipfn/go/cmd/config"
+	"github.com/ipfn/ipfn/go/cmd/core"
+	"github.com/ipfn/ipfn/go/cmd/daemon"
+	"github.com/ipfn/ipfn/go/cmd/exp"
+	"github.com/ipfn/ipfn/go/cmd/wallet"
 )
 
 func init() {
+	RootCmd.AddCommand(exp.RootCmd)
+	core.RegisterCommands(RootCmd)
+	RootCmd.AddCommand(chain.RootCmd)
+	RootCmd.AddCommand(account.RootCmd)
+	RootCmd.AddCommand(wallet.RootCmd)
 	RootCmd.AddCommand(config.RootCmd)
-	RootCmd.AddCommand(keys.RootCmd)
-	RootCmd.AddCommand(seeds.RootCmd)
+	RootCmd.AddCommand(daemon.RootCmd)
 	RootCmd.PersistentFlags().BoolVarP(&logger.Verbose, "verbose", "v", false, "verbose logs output (stdout/stderr)")
 }
 
@@ -41,7 +49,7 @@ var cfgFile string
 
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
-	Use:   "ipfn commands",
+	Use: "ipfn commands",
 	Short: `IPFN – Interplanetary Functions
 
 https://github.com/ipfn/go-ipfn`,
@@ -57,6 +65,7 @@ func Execute() {
 }
 
 func init() {
+	cobra.EnableCommandSorting = false
 	cobra.OnInitialize(initConfig)
 
 	// Here you will define your flags and configuration settings.

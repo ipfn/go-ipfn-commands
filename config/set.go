@@ -15,7 +15,6 @@
 package config
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -34,16 +33,8 @@ var SetCmd = &cobra.Command{
 	Use:         "set [key] [value]",
 	Short:       "Sets config value",
 	Annotations: map[string]string{"category": "config"},
-	Args: func(cmd *cobra.Command, args []string) error {
-		if len(args) < 1 {
-			return errors.New("key and value argument is required")
-		}
-		if len(args) < 2 {
-			return errors.New("value argument is required")
-		}
-		return nil
-	},
-	Run: cmdutil.WrapCommand(HandleSetCmd),
+	Args:        cobra.MinimumNArgs(2),
+	Run:         cmdutil.WrapCommand(HandleSetCmd),
 }
 
 // HandleSetCmd - Handles config set command.

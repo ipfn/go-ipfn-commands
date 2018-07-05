@@ -12,40 +12,38 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package keys
+package daemon
 
 import (
-	"fmt"
+	"log"
+	"net/http"
+	"time"
 
 	"github.com/spf13/cobra"
 
 	cmdutil "github.com/ipfn/go-ipfn-cmd-util"
-	viperkeys "github.com/ipfn/go-viper-keystore"
+	"github.com/ipfn/ipfn/go/dev/coreapi"
 )
 
-func init() {
-	RootCmd.AddCommand(ListCmd)
-	// ListCmd.PersistentFlags().BoolVarP(&printKey, "print-key", "p", false, "Prints public keys")
+// RootCmd - Root exp RootCmd.
+var RootCmd = &cobra.Command{
+	Use:         "daemon",
+	Short:       "Starts daemon",
+	Long:        "Starts IPFN daemon server listener.",
+	Annotations: map[string]string{"category": "daemon"},
+	Run:         cmdutil.WrapCommand(HandleCmd),
 }
 
-// ListCmd - Key list command.
-var ListCmd = &cobra.Command{
-	Use:         "list",
-	Short:       "Lists available seeds",
-	Annotations: map[string]string{"category": "key"},
-	Run:         cmdutil.WrapCommand(HandleListCmd),
-}
-
-// HandleListCmd - Handles key list command.
-func HandleListCmd(cmd *cobra.Command, args []string) (err error) {
-	names, err := viperkeys.Names()
-	if err != nil {
-		return
+// HandleCmd - Handles daemon get command.
+func HandleCmd(cmd *cobra.Command, args []string) (err error) {
+	s := &http.Server{
+		Addr:           "localhost:8888",
+		Handler:        new(coreapi.Handler),
+		ReadTimeout:    10 * time.Second,
+		WriteTimeout:   10 * time.Second,
+		MaxHeaderBytes: 1 << 20,
 	}
-
-	for _, name := range names {
-		fmt.Println(name)
-	}
+	log.Fatal(s.ListenAndServe())
 
 	return
 }

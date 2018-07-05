@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package seeds
+package exp
 
 import (
 	"github.com/spf13/cobra"
 )
 
-// RootCmd - Root seed RootCmd.
+// RootCmd - Root exp RootCmd.
 var RootCmd = &cobra.Command{
-	Use:         "seed",
-	Short:       "Cryptographic seeds",
-	Annotations: map[string]string{"category": "seed"},
+	Use:         "exp",
+	Short:       "Experiments",
+	Annotations: map[string]string{"category": "exp"},
 }

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package seeds
+package wallet
 
 import (
 	"errors"
@@ -23,7 +23,8 @@ import (
 
 	cmdutil "github.com/ipfn/go-ipfn-cmd-util"
 	"github.com/ipfn/go-ipfn-cmd-util/logger"
-	viperkeys "github.com/ipfn/go-viper-keystore"
+	"github.com/ipfn/ipfn/go/keypair"
+	"github.com/ipfn/ipfn/go/wallet"
 )
 
 func init() {
@@ -33,34 +34,48 @@ func init() {
 // ExportCmd - Seed export command.
 var ExportCmd = &cobra.Command{
 	Use:         "export [name]",
-	Short:       "Prints seed mnemonic",
-	Annotations: map[string]string{"category": "seed"},
-	Args: func(cmd *cobra.Command, args []string) error {
-		if len(args) < 1 {
-			return errors.New("name argument is required")
-		}
-		has, err := viperkeys.Has(args[0])
-		if err != nil {
-			return fmt.Errorf("failed to read keystore: %v", err)
-		}
-		if !has {
-			return fmt.Errorf("seed %q was not found", args[0])
-		}
-		return nil
-	},
-	Run: cmdutil.WrapCommand(HandleExportCmd),
+	Short:       "Export master key",
+	Annotations: map[string]string{"category": "wallet"},
+	Args:        checkExistsArgs,
+	Run:         cmdutil.WrapCommand(HandleExportCmd),
 }
 
 // HandleExportCmd - Handles seed export command.
 func HandleExportCmd(cmd *cobra.Command, args []string) (err error) {
+	name := cmdutil.ArgDefault(args, 0, "default")
+	w := wallet.NewDefault()
+	has, err := w.KeyExists(name)
+	if err != nil {
+		return fmt.Errorf("failed to read keystore: %v", err)
+	}
+	if !has {
+		return fmt.Errorf("seed %q was not found", name)
+	}
 	password := prompt.PasswordMasked("Encryption password")
 	if password == "" {
 		return errors.New("failed to get encryption password")
 	}
-	mnemonic, err := viperkeys.Decrypt(args[0], []byte(password))
+	key, err := w.ExportKey(name)
 	if err != nil {
 		return
 	}
-	logger.Printf("Mnemonic: %s", mnemonic)
+	seed, err := key.Decrypt([]byte(password))
+	if key.SeedType == keypair.Mnemonic {
+		logger.Printf("Mnemonic: %s", seed)
+	} else {
+		logger.Printf("Private key: %s", seed)
+	}
 	return
+}
+
+func checkExistsArgs(cmd *cobra.Command, args []string) (err error) {
+	name := cmdutil.ArgDefault(args, 0, "default")
+	has, err := wallet.NewDefault().KeyExists(name)
+	if err != nil {
+		return err
+	}
+	if !has {
+		return fmt.Errorf("%q wallet does not exist", name)
+	}
+	return nil
 }
