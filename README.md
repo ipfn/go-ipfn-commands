@@ -1,9 +1,11 @@
-# IPFN CLI commands in Go
+# IPFN commands in Go
 
 [![IPFN project](https://img.shields.io/badge/project-IPFN-blue.svg?style=flat-square)](http://github.com/ipfn)
 [![GoDoc](https://godoc.org/github.com/ipfn/go-ipfn-commands?status.svg)](https://godoc.org/github.com/ipfn/go-ipfn-commands)
 
-IPFN CLI commands for Go programming language.
+IPFN commands for Go programming language.
+
+WIP(*): migration from console to IPFN-based commands
 
 ## License
 
